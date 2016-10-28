@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>ImageView</title>
+
+    <link href="./style.css" rel="stylesheet" type="text/css" />
+    <style>
+    body { font-family: sans-serif;
+           color:#444444;}
+
+    td {font-size:70%;}
+
+
+    .link { color:#444444;  }
+    .link:hover { color:#666666; }
+
+    .tFile { color:#444444; }
+    .tFile:hover { color:gray; }
+
+    .tDir { color:DodgerBlue;}
+    .tDir:hover { color:DarkCyan;}
+
+    .tLink { fonct-color:pink;}
+    .crimson {color:crimson;}
+
+    </style>
+  </head>
+  <body>
+
+    <div >
+        <a onClick="$('#sqlite').slideToggle(10)" class="s120 bold" href="javascript:void(0)" >sqlite</a>
+        <a onClick="setXYs();" class="s120 bold" href="javascript:void(0)" >setXY</a>
+        <a onClick="createThumbnails();" class="s120 bold" href="javascript:void(0)" >createthumb</a>
+
+        <a onClick="filterSqlite('');" class="s120 bold" href="javascript:void(0)" >refreshSqlite</a>
+
+        <a onClick="osRun('open ' + _G.thumb_dir)" class="s120 bold" href="javascript:void(0)" >openThumbDir</a>
+
+
+        <a onClick="$('#shortcut').slideToggle(10)" href="javascript:void(0)"><span class="crimson">Shortcut</span></a>
+
+        <a onClick="osRunOut('rm ' + _G.save_path + '/*','debug','replace'); " href="javascript:void(0)"><span class="crimson">DelCache</span></a>
+
+        <div id="shortcut" style="display:none; margin:10px;" >
+          <!--Com H : go home directory <br/>  com h は appli をhide -->
+          Com UP : go upper directory <br/>
+          Com N : create new file or directory <br/>
+          Com B : toggle Bookmark <br/>
+          Com ← : back history 1 <br/>
+          Com ↑ : upper folder <br/>
+        </div>
+
+    <br/>
+    <span id="image_root" class="s100" ></span>
+    <span id="total_ext"></span>
+
+    <input id="filter_bookmark" type="text" class="" size=15 placeholder="filter bookmark">
+    
+    <span class="btn" onMouseOver="$('img').attr('height','50').attr('width','50')">50</span> 
+    <span class="btn" onMouseOver="$('img').attr('height','80').attr('width','80')">80</span> 
+    <span class="btn" onMouseOver="$('img').attr('height','100').attr('width','100')">100</span> 
+    <span class="btn" onMouseOver="$('img').attr('height','200').attr('width','200')">200</span> 
+
+    <br/>
+
+    <div id="sqlite" class="">
+        SQLite debug<br/>
+        
+        <div id="sqlite_summary">summary</div>
+        <div id="sqlite1" ></div>
+        <div id="sqlite2" ></div>
+        <div id="sqlite3" ></div>
+    </div>
+  thumbnail
+    <div id="thumbnail_pane" ></div>
+
+    <div id="image_list" ></div>
+
+    </div>
+  </body>
+  <script>
+    // You can also require other files to run in this process
+    require('./js/renderer.js')
+    require('./js/functions.js') 
+    require('./js/finder.js')
+
+    require('./js/init.js') // _G はここで定義
+
+  </script>
+</html>
