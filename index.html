@@ -29,13 +29,15 @@
   <body>
 
     <div >
-        <a onClick="$('#sqlite').slideToggle(10)" class="s120 bold" href="javascript:void(0)" >sqlite</a>
-        <a onClick="setXYs();" class="s120 bold" href="javascript:void(0)" >setXY</a>
-        <a onClick="createThumbnails();" class="s120 bold" href="javascript:void(0)" >createthumb</a>
+        selects <div id="selects"></div>
 
-        <a onClick="filterSqlite('');" class="s120 bold" href="javascript:void(0)" >refreshSqlite</a>
+        sqlite(
+        <a onClick="setXYs();" href="javascript:void(0)" >setXY</a>
+        <a onClick="createThumbnails();" href="javascript:void(0)" >thumb</a>
+        <a onClick="filterSqlite('');"  href="javascript:void(0)" >refresh</a>
+        )
 
-        <a onClick="osRun('open ' + _G.thumb_dir)" class="s120 bold" href="javascript:void(0)" >openThumbDir</a>
+        <a onClick="osRun('open ' + _G.thumb_dir)" class="" href="javascript:void(0)" >thumbDir</a>
 
 
         <a onClick="$('#shortcut').slideToggle(10)" href="javascript:void(0)"><span class="crimson">Shortcut</span></a>
@@ -52,25 +54,34 @@
         </div>
 
     <br/>
-    <span id="image_root" class="s100" ></span>
+
+    <a href="" onClick="osRun('open ' + _G.imageroot)" >
+        <span id="image_root" class="s100" ></span><br/>
+    </a>
     <span id="total_ext"></span>
 
     <input id="filter_bookmark" type="text" class="" size=15 placeholder="filter bookmark">
     
-    <span class="btn" onMouseOver="$('img').attr('height','50').attr('width','50')">50</span> 
-    <span class="btn" onMouseOver="$('img').attr('height','80').attr('width','80')">80</span> 
-    <span class="btn" onMouseOver="$('img').attr('height','100').attr('width','100')">100</span> 
-    <span class="btn" onMouseOver="$('img').attr('height','200').attr('width','200')">200</span> 
+    <span class="btn" onMouseOver="$('img[type=thumb]').attr('height','50').attr('width','50')">50</span> 
+    <span class="btn" onMouseOver="$('img[type=thumb]').attr('height','80').attr('width','80')">80</span> 
+    <span class="btn" onMouseOver="$('img[type=thumb]').attr('height','100').attr('width','100')">100</span> 
+    <span class="btn" onMouseOver="$('img[type=thumb]').attr('height','200').attr('width','200')">200</span> 
 
     <br/>
 
     <div id="sqlite" class="">
-        SQLite debug<br/>
-        
-        <div id="sqlite_summary">summary</div>
-        <div id="sqlite1" ></div>
-        <div id="sqlite2" ></div>
-        <div id="sqlite3" ></div>
+        <div id="sqlite_sql" ></div>
+
+        <table><tr><td whdth=80% >
+            <div id="result_thumbnails" ></div>
+        </td><td width="350px" valign=top >
+            <div id="preview_metadata" >preview_metadata</div>             
+
+            <img id="preview" width="350px" />        
+        </td></tr></table>
+
+        <div id="result_sqlite" ></div>
+
     </div>
   thumbnail
     <div id="thumbnail_pane" ></div>
@@ -83,7 +94,8 @@
     // You can also require other files to run in this process
     require('./js/renderer.js')
     require('./js/functions.js') 
-    require('./js/finder.js')
+    require('./js/event.js')
+    require('./js/image.js')
 
     require('./js/init.js') // _G はここで定義
 

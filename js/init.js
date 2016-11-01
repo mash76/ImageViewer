@@ -26,6 +26,7 @@ repo_btn_prev_push = "" //リポジトリ以下のBUTTONで直前push したも�
 repo_prev_push = ""
 top_filtered_repo = ""
 
+_G.selects = [] // 選択中のinode
 
 _G.filesize_level_ary = {
   1:5000    ,
@@ -53,35 +54,31 @@ console.log('process.resourcesPath',process.resourcesPath)
 //保存ファイル読み込み
 if (!fs.existsSync(_G.approot_path +'/userdata')) fs.mkdir(_G.approot_path +'/userdata')
 
-// _G.bookmark_ary = loadJson(_G.save_path　+ '/bookmark.json')
-// if (!_G.bookmark_ary) _G.bookmark_ary = {}
-// setInitialBookmark()
-
 // 対象の画像パス
-_G.imageroot = '/Users/horimasato/Desktop/click_311'
+_G.imageroot = '/Users/horimasato/Desktop/imagetest'
 //_G.imageroot = '/Volumes/LaCie/写真 Library.photoslibrary/Masters'
-_G.thumb_dir = _G.imageroot + '/thumb'
+_G.thumb_dir = _G.approot_path +'/userdata/thumb'
 if (!fs.existsSync(_G.thumb_dir)) fs.mkdir(_G.thumb_dir)
 
 // SQLite処理  -----------------------------------------------------
 sqlitedump = function(sql,_db){
   var out =""
   out += 'sql:' + sql + '\n'
-  _db.each(sql, function (err, row) {
-      var colstr = ""
-      for (var colname in row){
-          colstr += colname + ':' + row.colname + ' '
+  _db.all(sql, function (err, rows) {
+      for (var ind in rows){
+          var colstr = ""
+          for (var colname in row){
+              colstr += colname + ':' + row.colname + ' '
+          }
+          colstr += '\n'
+          out += colstr
       }
-      colstr += '\n'
-      console.log('col: ' + colstr)
-      out += colstr
+
   })
   console.log(out)
 }
 
-
 _G.sqlite_path = _G.approot_path +'/userdata/sqlite.db'
-
 sqlite3 = require('sqlite3').verbose()
 db = new sqlite3.Database(_G.sqlite_path)
 
@@ -92,7 +89,9 @@ db.serialize(function () {
   db.run("CREATE TABLE images " +
           "(id INTEGER,inode INTEGER,filesize INTEGER,filesize_level INTEGER, ctime TEXT ,mtime TEXT , " + 
           "rate INTEGER, path TEXT,dir TEXT,filename TEXT,ext TEXT, " + 
-          "width INTEGER, height INTEGER, memo TEXT,thumb_gen_time INTEGER, created TEXT)" )
+          "width INTEGER, height INTEGER, wh_time INTEGER," + 
+          "thumb_time INTEGER, thumb_size INTEGER," + 
+          "memo TEXT, created TEXT)" )
 
   // var stmt = db.prepare("INSERT INTO images (inode,path,filename,created) VALUES (?,?,?,?)")
   // for (var i = 0; i < 10; i++) stmt.run(1,"team " + i,'aaa','2016-10')
@@ -184,8 +183,8 @@ osRunCb("find '" + _G.imageroot + "' -type d -maxdepth 1 ",
 
                         //ファイル情報を取得
                         var stat = fs.statSync(fullpath) 
-                        var stmt = db.prepare("INSERT INTO images (id,inode,filesize,filesize_level,ctime,mtime,path,dir,ext,filename,created) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
-                        stmt.run(id,stat.ino, stat.size, getFileSizeLevel(stat.size), stat.ctime.getTime(), stat.mtime.getTime(), 
+                        var stmt = db.prepare("INSERT INTO images (id,inode,rate,filesize,filesize_level,ctime,mtime,path,dir,ext,filename,created) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
+                        stmt.run(id,stat.ino, 0,stat.size, getFileSizeLevel(stat.size), stat.ctime.getTime(), stat.mtime.getTime(), 
                                 fullpath, path.relative( _G.imageroot, path.dirname( fullpath )  ) ,path.extname( fullpath ) , path.basename( fullpath ) , 
                                 new Date().getTime())
                         stmt.finalize();
@@ -223,12 +222,16 @@ setXY = function (record,cb){
 
     //imagemagickで画像情報を取得
     var shell = "identify -format '%w %h' '" + record.path + "'" 
-    osRunCbParam(shell, {inode:record.inode, fullpath:record.path }, function(ret_ary,param){  //cb(ret_ary,cb_param,stderr,command)
+
+    osRunCbParam(shell, {inode:record.inode, fullpath:record.path ,start: new Date() }, function(ret_ary,param){  //cb(ret_ary,cb_param,stderr,command)
+        
         console.log( 'osRunCbParam iden ' , param , ret_ary.join('').trim() )
-        var width_height_ary = ret_ary.join('').trim().split(' ')
-    
-        var sql = "UPDATE images set width=" + width_height_ary[0] + " ,height=" + width_height_ary[1] + " where inode =" + param.inode
-        console.log('sql',sql)
+        var wh = ret_ary.join('').trim().split(' ')
+
+        console.log('start' , param.start.getTime())
+        console.log('end' , new Date().getTime())
+        console.log('end-start' , new Date().getTime() - param.start.getTime())        
+        var sql = "UPDATE images set width=" + wh[0] + " ,height=" + wh[1] + " ,wh_time=" + (new Date() - param.start) + " where inode =" + param.inode
         var stmt = db.prepare(sql)
         stmt.run()
         stmt.finalize();  
@@ -243,25 +246,6 @@ setXYs = function (){
         if (!row.width){
             setXY(row)
         }
-    })
-}
-
-// サムネイル生成 ---------  xyを作ってから　recordに inode path width height 必要
-createThumb = function(record,cb){
-    console.log( 'createThumb' );
-
-    //サムネイルなければ生成 同じ拡張子で
-    var shell = "convert -resize 180x120 '" + record.path + "' " + _G.thumb_dir + '/' + record.inode + path.extname(record.path)
-    osRunCbParam(shell, { x:record.width ,y:record.height }, function(ret_ary,param){  //cb(ret_ary,cb_param,stderr,command)
-        console.log( 'osRunCbParam convert ')
-        if (typeof cb == "function") cb()
-    })
-}
-createThumbnails = function(){
-    console.log( 'createThumbnail' );
-    //sqlite読み出し
-    db.each("SELECT * FROM images", function (err, row) {
-        createThumb(row)
     })
 }
 
@@ -301,69 +285,6 @@ toggleDevTools = function(){  ipcRenderer.send('ipcDevTool', 'ping')   }
 toggleFullScreen = function(){  ipcRenderer.send('ipcFullScreen', 'ping')   }
 
 
-$("#filter_bookmark").keyup((e) =>{ 
-    console.log('#filter_bookmark keyup')
-    if (e.which == 13) filterSqlite($('#filter_bookmark').val());
-})
 
-filterSqlite = function(filter){
 
-    if (filter == undefined || filter == null ) alert('filter ' + filter)
-
-    $('#sqlite1').html('')
-
-    var sql = "SELECT * FROM images "
-    var where_ary = []
-    var filter_ary = filter.trim().split(/\s+/)
-    var ret = ""
-    for (var ind5 in filter_ary ){
-        if (filter_ary[ind5]) where_ary.push(" filename like '%" + filter_ary[ind5] + "%' ")
-    }
-    if (where_ary.length > 0) sql += ' where ' + where_ary.join(' and ')
-
-    $('#sqlite1').append(sql)
-
-    db.all(sql, function (err, rows) {
-      console.log( 'images _all : ' + rows.length);
-      if (rows.length > 0) $('#sqlite1').append(ary2html( recordsMatchRed(rows, filter), 'title rowcount'))
-    });
-}
-
-//ショートカット
-$(document).on('keydown', function(e) {
-
-    console.log("key metakey shiftkey ctrlkey", e.which, e.metaKey, e.shiftKey, e.ctrlKey )
-
-    if (e.which ==38 && !e.metaKey) {  //   up
-
-    }
-    if (e.which == 37 && !e.metaKey) {  //  left  小フォルダに移動
-
-    }
-
-    //メインプロセス通信
-    if (e.metaKey && e.key == "9") toggleFullScreen(); // com 9
-    if (e.metaKey && e.key == "d") toggleDevTools(); // com D
-
-    //最小化とぶつかる
-    // if (e.which ==72 && e.metaKey) {  // com H
-    //    goDir(userhome_path)
-    // }
-   //  if (e.which ==78 && e.metaKey) {  // com N
-	  //   toggleNew('toggle')
-   //  }
-   //  if (e.which ==69 && e.metaKey) {  // com E  エディタで編集
-   //    var filename = $('#file_name').text()
-   //    if (filename) osRun('open -t ' + filename)
-   //  }
-   //  if (e.which ==70 && e.metaKey) {  // com F   
-		 //  toggleFindgrep('toggle')
-	  // }
-   //  if (e.which ==27) {  // esc いろいろ開いてるもの閉じる
-   //    console.log('esc');
-   //    toggleBookmarkList('down','')
-   //    toggleFindgrep('up')
-   //    $('#mainwin').hide()
-   //  }
-})
 
