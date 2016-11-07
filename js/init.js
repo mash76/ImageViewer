@@ -22,11 +22,11 @@ execOption = { encoding: 'utf8',
                   cwd: '',
                   env: null }
 
-repo_btn_prev_push = "" //リポジトリ以下のBUTTONで直前push したもの
-repo_prev_push = ""
-top_filtered_repo = ""
 
-_G.selects = [] // 選択中のinode
+_G.thumb_selects = [] // 選択中のinode
+_G.thumb_over = null
+_G.db_inodes = []
+_G.db_rates = { '0':0, '1':0, '2':0, '3':0, '4':0, '5':0 }
 
 _G.filesize_level_ary = {
   1:5000    ,
@@ -80,18 +80,34 @@ sqlitedump = function(sql,_db){
 
 _G.sqlite_path = _G.approot_path +'/userdata/sqlite.db'
 sqlite3 = require('sqlite3').verbose()
-db = new sqlite3.Database(_G.sqlite_path)
 
+
+_G.firsttime = true
+if (fs.existsSync(_G.sqlite_path)) _G.firsttime = false
+
+db = new sqlite3.Database(_G.sqlite_path)
 
 db.serialize(function () {
 
-  db.run("DROP TABLE images") //テスト用
-  db.run("CREATE TABLE images " +
-          "(id INTEGER,inode INTEGER,filesize INTEGER,filesize_level INTEGER, ctime TEXT ,mtime TEXT , " + 
-          "rate INTEGER, path TEXT,dir TEXT,filename TEXT,ext TEXT, " + 
-          "width INTEGER, height INTEGER, wh_time INTEGER," + 
-          "thumb_time INTEGER, thumb_size INTEGER," + 
-          "memo TEXT, created TEXT)" )
+  //初回のみ
+  if (_G.firsttime){
+      console.log('初回')
+//      db.run("DROP TABLE images") //テスト用
+      db.run("CREATE TABLE images " +
+              "(id INTEGER,inode INTEGER,filesize INTEGER,filesize_level INTEGER, ctime TEXT ,mtime TEXT , " + 
+              "rate INTEGER, path TEXT,dir TEXT,filename TEXT,ext TEXT, " + 
+              "width INTEGER, height INTEGER, wh_time INTEGER," + 
+              "thumb_time INTEGER, thumb_size INTEGER," + 
+              "memo TEXT, created TEXT)" )
+  }else{
+      console.log('初回でない')
+
+      //dbを取得してinodeリスト取得
+
+
+  }
+
+
 
   // var stmt = db.prepare("INSERT INTO images (inode,path,filename,created) VALUES (?,?,?,?)")
   // for (var i = 0; i < 10; i++) stmt.run(1,"team " + i,'aaa','2016-10')
@@ -138,7 +154,7 @@ var gm = require('gm').subClass({ imageMagick: true });
 $('#image_root').html(_G.imageroot)
 
 
-//全体の拡張子数のリストを作る
+//画像ファイルを検索して全体の拡張子数のリストを作る
 osRunCb("find '" + _G.imageroot + "'  -type f -maxdepth 6 | egrep -i '(\.png|\.gif|\.jpg|\.jpeg)$' ",
   function( ret_ary2,stderr,command ,cb_param){
       //$('#image_list').append(sSilver(command) + '<br/>')             
@@ -149,7 +165,7 @@ osRunCb("find '" + _G.imageroot + "'  -type f -maxdepth 6 | egrep -i '(\.png|\.g
   null // コールバックへの引数cb_param
 )
 
-//各子フォルダファイルの一覧を取得
+//各 子フォルダファイルの一覧を取得
 osRunCb("find '" + _G.imageroot + "' -type d -maxdepth 1 ",
   function( ret_ary ){
 

@@ -6,30 +6,33 @@
 
     <link href="./style.css" rel="stylesheet" type="text/css" />
     <style>
-    body { font-family: sans-serif;
-           color:#444444;}
+    body { font-family: sans-serif ; 
+           color:#444444 ; }
 
-    td {font-size:70%;}
+    td {font-size:70% ; }
 
+    .link { color:#444444 ; }
+    .link:hover { color:#666666 ; }
 
-    .link { color:#444444;  }
-    .link:hover { color:#666666; }
+    .tFile { color:#444444 ; }
+    .tFile:hover { color:gray ; }
 
-    .tFile { color:#444444; }
-    .tFile:hover { color:gray; }
+    .tDir { color:DodgerBlue ; }
+    .tDir:hover { color:DarkCyan ; }
 
-    .tDir { color:DodgerBlue;}
-    .tDir:hover { color:DarkCyan;}
-
-    .tLink { fonct-color:pink;}
-    .crimson {color:crimson;}
+    .tLink { fonct-color:pink ; }
+    .crimson {color:crimson ; }
 
     </style>
   </head>
   <body>
 
     <div >
-        selects <div id="selects"></div>
+        selects <span id="thumb_selects"></span>
+        over <span id="thumb_over"></span>
+        <br/>
+        rates <span id="rates_stat"></span>
+
 
         sqlite(
         <a onClick="setXYs();" href="javascript:void(0)" >setXY</a>
@@ -42,7 +45,7 @@
 
         <a onClick="$('#shortcut').slideToggle(10)" href="javascript:void(0)"><span class="crimson">Shortcut</span></a>
 
-        <a onClick="osRunOut('rm ' + _G.save_path + '/*','debug','replace'); " href="javascript:void(0)"><span class="crimson">DelCache</span></a>
+        <a onClick="osRunOut('rm -rf ' + _G.save_path + '/*','debug','replace'); " href="javascript:void(0)"><span class="crimson">DelCache</span></a>
 
         <div id="shortcut" style="display:none; margin:10px;" >
           <!--Com H : go home directory <br/>  com h は appli をhide -->
@@ -72,7 +75,7 @@
     <div id="sqlite" class="">
         <div id="sqlite_sql" ></div>
 
-        <table><tr><td whdth=80% >
+        <table><tr><td whdth=80% valign=top >
             <div id="result_thumbnails" ></div>
         </td><td width="350px" valign=top >
             <div id="preview_metadata" >preview_metadata</div>             
@@ -96,7 +99,7 @@
     require('./js/functions.js') 
     require('./js/event.js')
     require('./js/image.js')
-
+    require('./js/sqlite.js')
     require('./js/init.js') // _G はここで定義
 
   </script>

@@ -1,26 +1,51 @@
 
 
 
+//マウスオーバー中の仮選択
+setOver = function(inode){
+	_G.thumb_over = inode
+  	$('#thumb_over').html(  _G.thumb_over );
+}
+
+//押下中のマウスオーバーか、shift押しながら追加したときに
 setSelection = function(mode,inode_ary ){
 
-  if (mode != 'add' && mode != 'remove' && mode != 'set' && mode != 'clear' ) {
-      alert('mode =' +mode + 'not add/remove/set/clear ' ) 
+  if (mode != 'add' && mode != 'remove' && mode != 'set'  ) {
+      alert('mode =' +mode + 'not add/remove/set ' ) 
   }
-  console.log('setSelection inode_ary=' , typeof inode_ary, inode_ary  )
+  console.log('setSelection / mode inode_ary / ' , mode , typeof inode_ary, inode_ary  )
 
 
   if (mode == 'add') {
-      _G.selects.concat(inode_ary)   
+      _G.thumb_selects = _G.thumb_selects.concat(inode_ary)   
   }
   if (mode == 'set') {
-      _G.selects = inode_ary   
+      _G.thumb_selects = inode_ary   
   }
   if (mode == 'remove') {
-      //_G.selects.push(inode_ary)   
+      _G.thumb_selects.push(inode_ary)   
   }  
-  if (mode == 'clear') {
-      _G.selects=[]
-  }  
+
+  //クリアするときは set で[] 渡す
+
+  $('#thumb_selects').html( sRed(_G.thumb_selects.length) + ' ' + _G.thumb_selects.join(' ') );
+
+}
+
+rateImages = function(rate , inode_ary){
+
+	for (var ind in inode_ary){
+        var sql = "UPDATE images set rate=" + rate + " where inode =" + inode_ary[ind]
+        console.log(sql)
+        var stmt = db.prepare(sql)
+        stmt.run()
+        stmt.finalize();  
+
+
+	}
+
+
+
 
 }
 
@@ -35,6 +60,7 @@ focusImage = function(inode) {
         )
     })
 }
+
 
 
 // サムネイル生成 ---------  xyを作ってから　recordに inode path width height 必要
